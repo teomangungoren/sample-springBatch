@@ -2,6 +2,7 @@ package com.batchMaster.customer.config;
 
 import com.batchMaster.customer.model.Customer;
 import com.batchMaster.customer.repository.CustomerRepository;
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -13,6 +14,8 @@ import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -26,9 +29,10 @@ public class BatchConfiguration {
     private final DataSourceConfiguration dataSourceConfiguration;
 
     public BatchConfiguration(JobBuilder jobBuilder,
-                              StepBuilder stepBuilder,
+            StepBuilder stepBuilder,
                               CustomerRepository customerRepository,
                               DataSourceConfiguration dataSourceConfiguration) {
+
         this.jobBuilder = jobBuilder;
         this.stepBuilder = stepBuilder;
         this.customerRepository = customerRepository;
@@ -78,6 +82,7 @@ public class BatchConfiguration {
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())
+                .taskExecutor(taskExecutor())
                 .transactionManager(getTransactionManager(dataSourceConfiguration.dataSource()))
                 .build();
     }
@@ -87,5 +92,18 @@ public class BatchConfiguration {
         return new DataSourceTransactionManager(dataSourceConfiguration.dataSource());
     }
 
+   @Bean
+    public Job runJob(){
+        return jobBuilder
+                .flow(step1())
+                .end()
+                .build();
+    }
+    @Bean
+    public TaskExecutor taskExecutor(){
+        SimpleAsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor();
+        taskExecutor.setConcurrencyLimit(5);
+        return taskExecutor;
+    }
 
 }
