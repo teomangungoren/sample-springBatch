@@ -4,4 +4,14 @@ spring:
       enabled: false
     jdbc:
       initialize-schema: ALWAYS
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://host.docker.internal:5432/postgres
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    generate-ddl: true
+
 
